@@ -1,0 +1,14 @@
+{
+  "name": "practice_1",
+  "version": "1.0.0",
+  "description": "\"First app to know about deploying\"",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Pravin",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
