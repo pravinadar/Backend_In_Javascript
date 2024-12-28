@@ -1,5 +1,7 @@
 We will be learning and practicing about how to make schemas and models using mongoose
 
+# Ecommerce
+
 ## user.model.js
 
 ### Defining the Schema
