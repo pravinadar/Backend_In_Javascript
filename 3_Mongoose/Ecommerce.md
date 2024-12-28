@@ -50,11 +50,7 @@ const userSchema = new Schema({
         - `lowercase: true`: Converts the value to lowercase before storing it in the database.
 
 2. **`email`**
-    - **Type**: `String`
-    - **Attributes**:
-        - `required: true`: This field is mandatory.
-        - `unique: true`: Ensures no two users can have the same email address.
-        - `lowercase: true`: Converts the value to lowercase before storing it in the database.
+    - Same as the above `username` schema
 
 3. **`password`**
     - **Type**: `String`
@@ -99,13 +95,13 @@ owner: {
 }
 ```
 1. `type: mongoose.Schema.Types.ObjectId`
-- Purpose: Indicates that this field will store an ObjectId, which is the unique identifier for a document in MongoDB.
-- ObjectId: A 12-byte identifier that MongoDB uses for uniquely identifying documents. It's commonly used to reference other documents.
+- **Purpose** : Indicates that this field will store an ObjectId, which is the unique identifier for a document in MongoDB.
+- **ObjectId** : A 12-byte identifier that MongoDB uses for uniquely identifying documents. It's commonly used to reference other documents.
 2. `ref: "User"`
-- Purpose: Specifies the name of the model (User) that this ObjectId references.
-- Effect: This creates a relationship between the Product model and the User model. When querying the Product model, you can populate the owner field with the corresponding User document.
+- **Purpose** : Specifies the name of the model (User) that this ObjectId references.
+- **Effect** : This creates a relationship between the Product model and the User model. When querying the Product model, you can populate the owner field with the corresponding User document.
 
-**Example Use Case**
+### **Example Use Case**
 - **Storing Data** : The `owner` field might store an ObjectId like `60f71b2e8d10a64b4c2b9f3a`, which corresponds to a user in the `users` collection.
 - **Populating Data** : When querying, you can use Mongoose's `populate` method to replace the ObjectId with the actual user document.
 ```js
@@ -209,3 +205,55 @@ Using `type: String` for the `product_image` field is a practical and efficient 
 2. It keeps the database lightweight and efficient.
 3. It adheres to best practices of separating image storage and database operations.
 
+## order.model.js
+
+```js
+import mongoose, { Schema } from "mongoose"
+
+const orderItemSchema = new Schema({
+
+    prtductId:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"Product"
+    },
+    quantity: {
+        type: Number,
+        required: true
+    },
+    
+
+}, { timestamps: true })
+
+const orderSchema = new Schema({
+
+    orderPrice: {
+        type: Number,
+        required: true
+    },
+    customer: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+    },
+    orderItems: {
+        type: [orderItemSchema],    // An array of 'orderItemSchema' to know which product is ordered how much
+    }
+
+}, { timestamps: true })
+
+export const Order = mongoose.model("Order", orderSchema)
+```
+
+Creating a separate orderItemSchema and using it within another schema (orderSchema) is a design choice that offers several benefits:
+
+1. Logical Grouping of Data
+    - **Why** : Each order can have multiple items, and each item has its own specific details (productId and quantity).
+    - **How** : By using a separate schema (orderItemSchema), you encapsulate the structure and logic of an individual item, keeping it separate from the parent schema (orderSchema).
+2. Reusability
+    - **Why** : If the `orderItemSchema` needs to be reused in another context (e.g., a cart system or a draft order), the schema is already defined and can be imported without duplicating code.
+    - **How** : You simply define it once and reference it in multiple places as needed.
+3. Easier Validation and Maintainability
+    - **Why** : Separating `orderItemSchema` allows you to focus validation and updates on a smaller, isolated schema. Any changes to the structure of an order item (e.g., adding a new field like discount) can be made without affecting the parent orderSchema directly.
+    - **How** : Changes to `orderItemSchema` automatically propagate to wherever it is used.
+4. Reflecting Real-World Relationships
+    - **Why**: Orders and their items have a "**one-to-many**" relationship. One order can have many items, and each item has its own properties and potentially its own lifecycle.
+    - **How**: This schema design mirrors the real-world relationship, making the data model intuitive.
