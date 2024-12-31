@@ -56,3 +56,12 @@ The folders are `controllers` , `db` , `middlewares` , `models` , `routes` , `ut
 **What is the `.prettierrc` file ?**
 - The `.prettierrc` file is a configuration file for Prettier where you can customize its behavior to suit your project’s needs.
 - It defines the rules and formatting style.
+
+## 10. Installed `mongoose` , `express` and `dotenv` packages
+
+#### Using `try-catch` or `promises` for establishing a database connection is professional because it ensures robust error handling during critical operations. 
+#### For database interactions, `async-await` is preferred as it makes asynchronous code more readable, maintainable, and avoids callback hell.
+ Both approaches align with modern development best practices and improve application stability and scalability.
+
+ ### The `dotenv` library loads environment variables from a `.env` file into `process.env`.
+
