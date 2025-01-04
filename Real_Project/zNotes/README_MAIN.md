@@ -217,7 +217,8 @@ MONGODB_URL=mongodb+srv://<your-username>:<your-password>@cluster0.vqanq.mongodb
 
 ## 13. Establishing database connection
 
-### Method 1 
+### Method 1
+
 **`index.js` file**
 
 ```js
@@ -243,46 +244,51 @@ const app = express();
     app.listen(process.env.PORT, () => {
       console.log(`console is listening on port ${process.env.PORT}`);
     });
-   } 
-   catch (error) {
+  } catch (error) {
     console.error("ERROR: ", error);
     throw error;
   }
 })();
 ```
+
 ### Method 2
 
 `db.js` file
+
 ```js
 import mongoose from "mongoose";
 import { DB_NAME } from "../constants";
 
-
 const db_connection = async () => {
-    try {
-        const connection_instance = await mongoose.connect(`${process.env.MONGODB_URL}/${DB_NAME}`)
-        console.log(`DB HOST ${connection_instance.connection.host}`)
-    } catch (error) {
-        console.log(`${error}`);
-        process.exit(1)
-    }
-}
+  try {
+    const connection_instance = await mongoose.connect(
+      `${process.env.MONGODB_URL}/${DB_NAME}`
+    );
+    console.log(`DB HOST ${connection_instance.connection.host}`);
+  } catch (error) {
+    console.log(`${error}`);
+    process.exit(1);
+  }
+};
 
 export default db_connection;
 ```
 
 `index.js` file
+
 ```js
-import dotenv from "dotenv"
-import db_connection from "./db/db"
+import dotenv from "dotenv";
+import db_connection from "./db/db";
 
 dotenv.config({
-    path: './env'
-})
+  path: "./env",
+});
 
 db_connection();
 ```
+
 edited the script in `package.json` file
+
 ```
 "scripts": {
     "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js",
@@ -302,6 +308,7 @@ When I ran the command `npm run dev`, I encountered the following error:
 ```
 Error: querySrv ENOTFOUND _mongodb._tcp.vin
 ```
+
 **Cause of the Error :**
 
 This error occurred because my MongoDB connection string in the `.env` file contained a password with special characters such as @, /, etc. These characters need to be `URL-encoded` in the connection string to ensure proper parsing and avoid misinterpretation.
@@ -321,4 +328,131 @@ I resolved the issue by URL-encoding my password. The encoding process converts 
 ```
 MONGODB_URL=mongodb+srv://<name>:p%40ssword@cluster0.vqanq.mongodb.net
 ```
+
 - **Test the Connection** : After saving the changes, I ran the command `npm run dev` again, and the issue was resolved. The connection to the MongoDB database was successfully established.
+
+## 14. Updated `app.js` and `index.js`
+
+`app.js`
+
+```js
+import express from "express";
+
+const app = express();
+
+export { app };
+```
+
+`index.js`
+
+```js
+import dotenv from "dotenv";
+import db_connection from "./db/db.js";
+import { app } from "./app.js";
+
+dotenv.config({
+  path: "./env",
+});
+
+db_connection()
+  .then(() => {
+    app.on("error", (error) => {
+      console.log(`ERROR: ${error}`);
+      throw error;
+    });
+
+    app.listen(process.env.PORT || 8000, () => {
+      console.log(`process is running at : ${process.env.PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error("MONGO DB CONNECTION ERROR : ", error);
+  });
+```
+
+## 15. Installed `cors` and `cookie-parser` packages, added `CORS_ORIGIN` in the `.env` file, and updated the `app.js` file.
+
+`app.js`
+
+```js
+import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+
+const app = express();
+
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN,
+    credentials: true,
+  })
+);
+
+app.use(express.json({ limit: "16kb" }));
+app.use(express.urlencoded({ extended: true, limit: "16kb" }));
+app.use(express.static("public"));
+app.use(cookieParser());
+
+export { app };
+```
+
+### `cors` : Middleware to enable Cross-Origin Resource Sharing, allowing resources to be accessed by other domains.
+
+### `cookie-parser` : Middleware to parse cookies from the Cookie header in incoming requests.
+
+1. **CORS** : Configures cross-origin access. `CORS_ORIGIN=*` allows any domain to access the server, suitable for development but **insecure** for production.
+2. **express.json** & **express.urlencoded** : Parse JSON and URL-encoded data in request bodies, with a size limit of 16 KB.
+3. **express.static** : Serves static files from the `public` directory.
+4. **cookie-parser** : Parses cookies into `req.cookies`.
+
+`CORS` package : Handles cross-origin requests.
+
+`Cookie-parser` package : Extracts cookies from requests.
+
+In production, replace `CORS_ORIGIN=*` with a specific domain for security.
+
+## 16. Made a utility in the utils folder named `asyncHandler.js`
+
+`asyncHandler.js`
+
+```js
+// Method 1
+
+const asyncHandler = (func) => async (req, res, next) => {
+  try {
+    await func(req, res, next); // Executes the passed function
+  } catch (error) {
+    res.status(error.code || 500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+```
+
+```js
+// Method 2
+
+const asyncHandler = (requestHandler) => {
+  return (req, res, next) => {
+    return Promise.resolve(requestHandler(req, res, next))
+      .catch((error) => next(error));
+  };
+};
+```
+
+All questions I had are answered in the `asyncHandler.md` file
+
+**Questions**
+
+1. What the code does (Explanation of `asyncHandler`).
+2. Middleware in Express and their role.
+3. Higher-order functions in JavaScript.
+4. Comparison of two versions of `asyncHandler` (Method 1 and Method 2).
+5. How error handling works in Express.
+6. Explanation of Promise and `Promise.resolve` .
+7. The roles of req, res, and next in Express.
+8. Simplified syntax options for `asyncHandler`.
+9. The parameter relationships of `asyncHandler` and `requestHandler`.
+10. How Express recognizes `req`, `res`, and `next` without an explicit import.
+11. A practical example of using `asyncHandler`.
