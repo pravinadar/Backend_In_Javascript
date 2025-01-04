@@ -440,7 +440,6 @@ const asyncHandler = (requestHandler) => {
   };
 };
 ```
-
 All questions I had are answered in the `asyncHandler.md` file
 
 **Questions**
@@ -456,3 +455,35 @@ All questions I had are answered in the `asyncHandler.md` file
 9. The parameter relationships of `asyncHandler` and `requestHandler`.
 10. How Express recognizes `req`, `res`, and `next` without an explicit import.
 11. A practical example of using `asyncHandler`.
+
+## 17. Made another utility `ApiError.js`
+
+```js
+class ApiError extends Error {
+  constructor(
+    statusCode,
+        message = "Something went wrong",
+        errors = [],
+        stack = ""
+    ) {
+        super(message)
+        this.statusCode = statusCode
+        this.data = null
+        this.message = message
+        this.success = false;
+        this.errors = errors
+
+        if (stack) {
+            this.stack = stack
+        } else {
+            Error.captureStackTrace(this, this.constructor)
+        }
+
+    }
+}
+
+export { ApiError }
+```
+All doubts I had are answered in the `asyncHandler.md` file
+
+## 18. Made another utility `ApiResponse.js`
