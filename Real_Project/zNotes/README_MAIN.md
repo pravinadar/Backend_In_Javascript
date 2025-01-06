@@ -487,3 +487,147 @@ export { ApiError }
 All doubts I had are answered in the `asyncHandler.md` file
 
 ## 18. Made another utility `ApiResponse.js`
+
+```js
+class ApiResponse {
+    constructor(statusCode, data, message = "Success"){
+        this.statusCode = statusCode
+        this.data = data
+        this.message = message
+        this.success = statusCode < 400
+    }
+}
+
+export { ApiResponse }
+```
+
+## 19. Made and worked on `user.model.js` and `video.model.js` in the `models` folder
+
+**more work is to be done in these files**
+
+`user.model.js`
+```js
+import mongoose, { Schema } from "mongoose"
+
+const userSchema = new Schema({
+
+    username: {
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true,
+        trim: true,
+        index: true  // reduces efficiency so use wisely on stuff that would need searching
+    },
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true,
+        trim: true,
+    },
+    fullname: {
+        type: String,
+        required: true,
+        trim: true,
+        index: true
+    },
+    avatar: {
+        type: String, // cloudinary url
+        required: true,
+    },
+    cover_image: {
+        type: String, // cloudinary url
+        required: true,
+    },
+    watch_history: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: "Video"
+        }
+    ],
+    
+
+}, { timestamps: true })
+
+export const User = mongoose.model("User", userSchema)
+```
+
+`video.model.js`
+```js
+import mongoose, { Schema } from "mongoose"
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2"
+
+const videoSchema = new Schema({
+
+    video_file: {
+        type: String,    // cloudinary url
+        required: true
+    },
+    thumbnail: {
+        type: String,    // cloudinary url
+        required: true
+    },
+    title: {
+        type: String,
+        required: true
+    },
+    description: {
+        type: String,
+        required: true
+    },
+    views: {
+        type: Number,
+        default: 0
+    },
+    isPublished: {
+        type: Boolean,
+        default: true
+    },
+    owner: {
+        type: Schema.Types.ObjectId,
+        ref: "User"
+    }
+
+}, { timestamps: true })
+
+videoSchema.plugin(mongooseAggregatePaginate)
+
+export const Video = mongoose.model("Video", videoSchema)
+```
+
+### Why Use `mongooseAggregatePaginate`?
+`mongooseAggregatePaginate` is a plugin that makes it easier to add pagination to aggregation pipelines. 
+
+Without it, you’d need to manually calculate the starting document (offset) for each page and limit the results, which can be error-prone.
+
+With the plugin, pagination becomes simpler, as it automatically:
+1. Splits the results into pages.
+2. Calculates metadata like total pages, current page, and total documents.
+3. Returns the paginated results.
+
+### What is Pagination?
+Pagination is the process of dividing a large dataset into smaller chunks (or "pages") that can be retrieved and displayed one at a time. 
+
+It’s commonly used in applications to display a subset of results at a time (e.g., 10 items per page) rather than loading all results at once, which can overwhelm both the server and the user interface.
+
+- Example: When browsing a video library, you may see videos split into pages like:
+  - Page 1: Videos 1–10
+  - Page 2: Videos 11–20
+  - ...and so on.
+
+### What is Aggregation?
+Aggregation in MongoDB is a process of transforming and analyzing data using a series of stages. Each stage applies a specific operation to the data (e.g., filtering, grouping, sorting), and the output of one stage becomes the input for the next.
+
+- Example:
+  - You might want to filter all published videos, group them by category, and then sort them by views.
+
+### What are Mongoose Aggregation Pipelines?
+In Mongoose, aggregation pipelines are a way to perform advanced queries on MongoDB collections. The pipeline consists of multiple stages, where each stage performs an operation like filtering, projecting, or sorting.
+
+- Key Stages:
+  1. `$match`: Filters documents based on conditions (e.g., only include published videos).
+  2. `$group`: Groups documents by a field (e.g., count videos by category).
+  3. `$sort`: Orders documents (e.g., sort by views in descending order).
+  4. `$project`: Selects specific fields (e.g., only return titles and views).
+
