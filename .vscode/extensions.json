@@ -1,5 +1,6 @@
 {
     "recommendations": [
-        "bengreenier.vscode-node-readme"
+        "bengreenier.vscode-node-readme",
+        "mintlify.document"
     ]
 }

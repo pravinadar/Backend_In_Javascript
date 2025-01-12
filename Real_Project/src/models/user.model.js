@@ -103,5 +103,9 @@ userSchema.methods.generateRefreshToken = function () {
         }
     );
 };
+// A refresh token is a long-lived credential used in conjunction with an access token to maintain user 
+// authentication without requiring them to log in again. 
+
+// It is part of the token-based authentication strategy to improve security and enhance the user experience.
 
 export const User = mongoose.model("User", userSchema);

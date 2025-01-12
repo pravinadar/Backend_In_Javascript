@@ -203,7 +203,7 @@ userSchema.pre("save", async function (next) {
 - Call `next(err)`: Indicates an error occurred and stops further processing.
 - Not Calling `next()`: Mongoose hangs and the event never completes.
 
-**Example: Flow of next**
+### Example: Flow of next
 
 **Scenario 1: Success**
 ```js
@@ -272,4 +272,128 @@ await user.save(); // Hangs forever because `next()` was not called
     - Call `next()` to continue the save operation.
     - Call `next(err)` to stop and report an error.
 - If you forget to call `next()`, Mongoose waits forever, assuming the operation isn't complete.
+---
 
+## Understanding `generateAccessToken` function
+
+```js
+// Generate an access token
+userSchema.methods.generateAccessToken = function () {
+    return jwt.sign(
+        {
+            _id: this._id,
+            email: this.email,
+            username: this.username,
+            fullName: this.fullName,
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        {
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+        }
+    );
+};
+```
+
+### **1. What does this function do?**
+The `generateAccessToken` function creates a JWT (JSON Web Token) that encodes a user’s information in a secure and compact format. 
+
+This token is used for authentication and is returned to the client after a successful login or registration.
+
+### **2. What is an Access Token?**
+An access token is a short-lived credential issued to a client after authentication. It is used to access protected resources on a server without requiring the user’s credentials again.
+
+- **Purpose:** To verify the identity of the client making the request.
+- **Structure:** Consists of three parts: header, payload, and signature, encoded and separated by dots (`.`).
+- **Usage:** Sent in an HTTP header (e.g., `Authorization: Bearer <token>`).
+
+### **3. What is `userSchema.methods`?**
+In Mongoose, the `methods` object on a schema allows you to define instance methods. These methods are available on all instances of a model created with that schema. 
+
+In this case, `generateAccessToken` is an instance method of the `User` model. When called, it generates a JWT specific to the user instance it is called on.
+
+### **4. What is `jwt` and `jwt.sign`?**
+- **JWT (JSON Web Token):** A compact, URL-safe method for representing claims between two parties. It is used for secure information exchange.
+
+- **`jwt.sign`:** A function provided by the `jsonwebtoken` library to create a signed token. The signature ensures that the token has not been tampered with.
+
+### **5. Arguments of `jwt.sign()`**
+The `jwt.sign()` function takes three arguments:
+
+1. **Payload (`{}`):**
+   - Contains the data to be encoded in the token.
+   - Example in this code:
+     ```javascript
+     {
+         _id: this._id,
+         email: this.email,
+         username: this.username,
+         fullName: this.fullName,
+     }
+     ```
+
+2. **Secret Key (`process.env.ACCESS_TOKEN_SECRET`):**
+   - A secret string used to sign the token and ensure its integrity.
+   - This secret is typically stored in an environment variable for security.
+
+3. **Options (`{}`):**
+   - Configures additional properties for the token.
+   - Example in this code:
+     ```javascript
+     {
+         expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+     }
+     ```
+   - The `expiresIn` option defines the token's validity period (e.g., `1h` for one hour).
+
+### **6. Are these the arguments meant to be given in their respective places? Is the `sign` function made this way?**
+Yes, the `jwt.sign()` function is explicitly designed to take the arguments in the specified order:
+
+1. **Payload:** The data to be encoded in the token.
+2. **Secret Key:** Used for signing and verifying the token's integrity.
+3. **Options:** Additional configurations such as expiration and issuer.
+
+This structure is a deliberate design of the `jsonwebtoken` library to ensure consistency and flexibility in creating tokens. The placement of arguments ensures that the essential components (payload and secret key) come first, followed by optional configurations.
+
+### **7. Is the token just a concatenation of the payload, secret, and options?**
+No, the token is not a direct concatenation. It consists of three parts:
+
+1. **Header:** Contains metadata about the token (e.g., signing algorithm and token type).
+   ```json
+   {
+       "alg": "HS256",
+       "typ": "JWT"
+   }
+   ```
+
+2. **Payload:** Contains the data (claims) provided in the first argument of `jwt.sign()`.
+   Example:
+   ```json
+   {
+       "_id": "12345",
+       "email": "user@example.com",
+       "username": "john_doe",
+       "fullName": "John Doe"
+   }
+   ```
+
+3. **Signature:** A cryptographic hash of the header and payload, created using the secret key.
+
+The token is structured as:
+```text
+header.payload.signature
+```
+Each part is Base64-encoded and separated by dots (`.`).
+
+### **8. Why is there an underscore in `_id`?**
+`_id` is a convention in MongoDB for the default unique identifier of a document. Mongoose includes this field by default in all schemas unless explicitly removed.
+
+The underscore helps distinguish it as a system-defined field, rather than one defined by the user.
+
+### **Summary**
+- **Purpose:** Generates a JWT containing user information.
+- **Key Components:**
+  - `jwt.sign()` is used to encode and sign the token.
+  - The payload includes user-specific data like `_id`, `email`, `username`, and `fullName`.
+  - The secret (`ACCESS_TOKEN_SECRET`) ensures the token's authenticity.
+  - Options like `expiresIn` define the token's expiration.
+- The resulting token is secure, compact, and used for authenticating the user.
