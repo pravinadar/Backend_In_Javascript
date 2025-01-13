@@ -430,11 +430,13 @@ const asyncHandler = (func) => async (req, res, next) => {
 
 const asyncHandler = (requestHandler) => {
   return (req, res, next) => {
-    return Promise.resolve(requestHandler(req, res, next))
-      .catch((error) => next(error));
+    return Promise.resolve(requestHandler(req, res, next)).catch((error) =>
+      next(error)
+    );
   };
 };
 ```
+
 All questions I had are answered in the `asyncHandler.md` file
 
 **Questions**
@@ -457,43 +459,43 @@ All questions I had are answered in the `asyncHandler.md` file
 class ApiError extends Error {
   constructor(
     statusCode,
-        message = "Something went wrong",
-        errors = [],
-        stack = ""
-    ) {
-        super(message)
-        this.statusCode = statusCode
-        this.data = null
-        this.message = message
-        this.success = false;
-        this.errors = errors
+    message = "Something went wrong",
+    errors = [],
+    stack = ""
+  ) {
+    super(message);
+    this.statusCode = statusCode;
+    this.data = null;
+    this.message = message;
+    this.success = false;
+    this.errors = errors;
 
-        if (stack) {
-            this.stack = stack
-        } else {
-            Error.captureStackTrace(this, this.constructor)
-        }
-
+    if (stack) {
+      this.stack = stack;
+    } else {
+      Error.captureStackTrace(this, this.constructor);
     }
+  }
 }
 
-export { ApiError }
+export { ApiError };
 ```
+
 All doubts I had are answered in the `asyncHandler.md` file
 
 ## 18. Made another utility `ApiResponse.js`
 
 ```js
 class ApiResponse {
-    constructor(statusCode, data, message = "Success"){
-        this.statusCode = statusCode
-        this.data = data
-        this.message = message
-        this.success = statusCode < 400
-    }
+  constructor(statusCode, data, message = "Success") {
+    this.statusCode = statusCode;
+    this.data = data;
+    this.message = message;
+    this.success = statusCode < 400;
+  }
 }
 
-export { ApiResponse }
+export { ApiResponse };
 ```
 
 ## 19. Made and worked on `user.model.js` and `video.model.js` in the `models` folder
@@ -501,176 +503,181 @@ export { ApiResponse }
 **more work is to be done in these files**
 
 `user.model.js`
+
 ```js
 import mongoose, { Schema } from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
 const userSchema = new Schema(
-    {
-        username: {
-            type: String,
-            required: true,
-            unique: true,
-            lowercase: true,
-            trim: true,
-            index: true, // Optimizes query performance for username
-        },
-        email: {
-            type: String,
-            required: true,
-            unique: true,
-            lowercase: true,
-            trim: true,
-            index: true, // Useful for frequent email lookups
-        },
-        fullName: {
-            type: String,
-            required: true,
-            trim: true,
-            index: true, // Optimizes search by full name
-        },
-        avatar: {
-            type: String, // Cloudinary URL
-            required: true,
-        },
-        coverImage: {
-            type: String, // Cloudinary URL
-            default: null, // Optional field with default
-        },
-        watchHistory: [
-            {
-                type: Schema.Types.ObjectId,
-                ref: "Video",
-            },
-        ],
-        password: {
-            type: String,
-            required: [true, "Password is required"],
-        },
-        refreshToken: {
-            type: String,
-            default: null, // Optional field with default
-        },
+  {
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true, // Optimizes query performance for username
     },
-    {
-        timestamps: true, // Automatically adds createdAt and updatedAt
-    }
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true, // Useful for frequent email lookups
+    },
+    fullName: {
+      type: String,
+      required: true,
+      trim: true,
+      index: true, // Optimizes search by full name
+    },
+    avatar: {
+      type: String, // Cloudinary URL
+      required: true,
+    },
+    coverImage: {
+      type: String, // Cloudinary URL
+      default: null, // Optional field with default
+    },
+    watchHistory: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Video",
+      },
+    ],
+    password: {
+      type: String,
+      required: [true, "Password is required"],
+    },
+    refreshToken: {
+      type: String,
+      default: null, // Optional field with default
+    },
+  },
+  {
+    timestamps: true, // Automatically adds createdAt and updatedAt
+  }
 );
 
 // Hash password before saving
 userSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next();
+  if (!this.isModified("password")) return next();
 
-    try {
-        this.password = await bcrypt.hash(this.password, 10);
-        next();
-    } catch (err) {
-        next(err); // Pass error to middleware
-    }
+  try {
+    this.password = await bcrypt.hash(this.password, 10);
+    next();
+  } catch (err) {
+    next(err); // Pass error to middleware
+  }
 });
 
 // Compare plain-text password with hashed password
 userSchema.methods.isPasswordCorrect = async function (password) {
-    try {
-        return await bcrypt.compare(password, this.password);
-    } catch (err) {
-        throw new Error("Password comparison failed.");
-    }
+  try {
+    return await bcrypt.compare(password, this.password);
+  } catch (err) {
+    throw new Error("Password comparison failed.");
+  }
 };
 
 // Generate an access token
 userSchema.methods.generateAccessToken = function () {
-    return jwt.sign(
-        {
-            _id: this._id,
-            email: this.email,
-            username: this.username,
-            fullName: this.fullName,
-        },
-        process.env.ACCESS_TOKEN_SECRET,
-        {
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
-        }
-    );
+  return jwt.sign(
+    {
+      _id: this._id,
+      email: this.email,
+      username: this.username,
+      fullName: this.fullName,
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+    }
+  );
 };
 
 // Generate a refresh token
 userSchema.methods.generateRefreshToken = function () {
-    return jwt.sign(
-        {
-            _id: this._id,
-        },
-        process.env.REFRESH_TOKEN_SECRET,
-        {
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
-        }
-    );
+  return jwt.sign(
+    {
+      _id: this._id,
+    },
+    process.env.REFRESH_TOKEN_SECRET,
+    {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+    }
+  );
 };
-// A refresh token is a long-lived credential used in conjunction with an access token to maintain user 
-// authentication without requiring them to log in again. 
+// A refresh token is a long-lived credential used in conjunction with an access token to maintain user
+// authentication without requiring them to log in again.
 
 // It is part of the token-based authentication strategy to improve security and enhance the user experience.
 
 export const User = mongoose.model("User", userSchema);
-
 ```
 
 `video.model.js`
+
 ```js
-import mongoose, { Schema } from "mongoose"
-import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2"
+import mongoose, { Schema } from "mongoose";
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
-const videoSchema = new Schema({
-
+const videoSchema = new Schema(
+  {
     video_file: {
-        type: String,    // cloudinary url
-        required: true
+      type: String, // cloudinary url
+      required: true,
     },
     thumbnail: {
-        type: String,    // cloudinary url
-        required: true
+      type: String, // cloudinary url
+      required: true,
     },
     title: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     description: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     views: {
-        type: Number,
-        default: 0
+      type: Number,
+      default: 0,
     },
     isPublished: {
-        type: Boolean,
-        default: true
+      type: Boolean,
+      default: true,
     },
     owner: {
-        type: Schema.Types.ObjectId,
-        ref: "User"
-    }
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+  },
+  { timestamps: true }
+);
 
-}, { timestamps: true })
+videoSchema.plugin(mongooseAggregatePaginate);
 
-videoSchema.plugin(mongooseAggregatePaginate)
-
-export const Video = mongoose.model("Video", videoSchema)
+export const Video = mongoose.model("Video", videoSchema);
 ```
 
 ### Why Use `mongooseAggregatePaginate`?
-`mongooseAggregatePaginate` is a plugin that makes it easier to add pagination to aggregation pipelines. 
+
+`mongooseAggregatePaginate` is a plugin that makes it easier to add pagination to aggregation pipelines.
 
 Without it, you’d need to manually calculate the starting document (offset) for each page and limit the results, which can be error-prone.
 
 With the plugin, pagination becomes simpler, as it automatically:
+
 1. Splits the results into pages.
 2. Calculates metadata like total pages, current page, and total documents.
 3. Returns the paginated results.
 
 ### What is Pagination?
-Pagination is the process of dividing a large dataset into smaller chunks (or "pages") that can be retrieved and displayed one at a time. 
+
+Pagination is the process of dividing a large dataset into smaller chunks (or "pages") that can be retrieved and displayed one at a time.
 
 It’s commonly used in applications to display a subset of results at a time (e.g., 10 items per page) rather than loading all results at once, which can overwhelm both the server and the user interface.
 
@@ -680,12 +687,14 @@ It’s commonly used in applications to display a subset of results at a time (e
   - ...and so on.
 
 ### What is Aggregation?
+
 Aggregation in MongoDB is a process of transforming and analyzing data using a series of stages. Each stage applies a specific operation to the data (e.g., filtering, grouping, sorting), and the output of one stage becomes the input for the next.
 
 - Example:
   - You might want to filter all published videos, group them by category, and then sort them by views.
 
 ### What are Mongoose Aggregation Pipelines?
+
 In Mongoose, aggregation pipelines are a way to perform advanced queries on MongoDB collections. The pipeline consists of multiple stages, where each stage performs an operation like filtering, projecting, or sorting.
 
 - Key Stages:
@@ -696,42 +705,100 @@ In Mongoose, aggregation pipelines are a way to perform advanced queries on Mong
 
 Go to **Real_Project/zNotes/user.model.js.md** for more in-depth notes
 
-## 20. Installed `cloudinary` and `multer` 
+## 20. Installed `cloudinary` and `multer`
 
 checkout `fileupload` package too
 
 ## 21. Made the `cloudinary.js` file in the `utils` folder
 
 ```js
-import { v2 as cloudinary } from 'cloudinary';
+import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 
 cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 const uploadOnCloudinary = async (localFilePath) => {
+  try {
+    if (!localFilePath) return null;
+
+    // uploading file on cloudinary
+    const response = await cloudinary.uploader.upload(localFilePath, {
+      // "localFilePath" is a variable expected
+      resource_type: "auto",
+    });
+
+    console.log(`file is uploaded to cloudinary ${response.url}`);
+    return response;
+  } 
+  catch (error) {
+    // Attempt to remove the temporary file
     try {
-        if (!localFilePath) return null;
-
-        // uploading file on cloudinary
-        const response = await cloudinary.uploader.upload(localFilePath, {
-            resource_type: "auto"
-        })
-
-        console.log(`file is uploaded to cloudinary ${response.url}`)
-        return response
-        
-    } catch (error) {
-        fs.unlinkSync(localFilePath) // remove the locally saved temporary file as the upload got failed
-
-        return null
-
+      fs.unlinkSync(localFilePath); // to remove the locally saved temporary file as the upload got failed
+      console.log(
+        `Temporary file ${localFilePath} removed after upload failure.`
+      );
+    } 
+    catch (unlinkError) {
+      console.error(
+        `Failed to remove temporary file ${localFilePath}:`,
+        unlinkError.message
+      );
     }
 
-}
+    return null;
+  }
+};
 
-export {uploadOnCloudinary}
+export { uploadOnCloudinary };
+```
+
+**`fs` Module** :
+The `fs` (File System) module in `Node.js` is used to interact with the file system.
+
+It allows you to:
+  - Read, write, delete, and modify files.
+  - Work with directories.
+  - Check file/directory stats.
+  - It offers both `asynchronous` (non-blocking) and `synchronous` (blocking) methods.
+
+
+`fs.unlinkSync` :
+  - **Purpose** : Deletes a file synchronously (blocking operation).
+  - **Syntax** : `fs.unlinkSync(path)`
+  - **path** : The path of the file to delete.
+  - **Usage** : Ensures the file is deleted before moving to the next operation.
+  - **Error Handling** : Throws an error if the file doesn't exist or permissions are insufficient
+
+  - **When to Use unlinkSync** :
+    - When you need to ensure the file is deleted before moving on to the next operation.
+    - When writing simple scripts where performance or blocking behavior isn't a concern.
+  - **When to Avoid unlinkSync** :
+    - In a server environment where non-blocking asynchronous operations are preferred for better performance and scalability.
+    - When handling large numbers of file operations to avoid freezing the application during synchronous tasks.
+
+## 22. Made `multer.middleware.js` in the middleware directory
+```js
+import multer from "multer"
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, "./public/temp")
+    },
+    filename: function (req, file, cb) {
+      cb(null, file.originalname)
+    }
+})
+
+// `cb` stands for "callback." 
+// It is a function provided by Multer that you call to pass the result back to Multer after performing your logic. 
+// It is used to define the behavior for destination and filename functions.
+// `cb` ensures that Multer waits for the callback before proceeding
+
+export const upload = multer({ 
+    storage, 
+})
 ```
