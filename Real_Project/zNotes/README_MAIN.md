@@ -802,3 +802,124 @@ export const upload = multer({
     storage, 
 })
 ```
+**Most of the setup work is done with this**
+
+**Learn about status codes**
+
+## 23. Made `user.controller.js` and `user.routes.js`
+
+`user.controller.js`
+```js
+import { asyncHandler } from "../utils/asyncHandler.js";
+
+const registerUser = asyncHandler(async (req,res)=>{
+    res.status(200).json({
+        message:"OK",
+    })
+})
+
+export {registerUser}
+```
+
+`user.routes.js`
+```js
+import { Router } from "express";
+
+const router = Router()
+
+export default router
+
+// Single Default Export:
+//     - This code uses export default to export the router object.
+//     - The ***imported name*** (router) ***can be anything***, as the default export does not require the name to match.
+//     - A module can only have one default export.
+```
+
+## 24. Worked on `app.js`, `user.routes.js`, `user.controller.js`
+
+`app.js`
+```js
+import express from "express"
+import cors from "cors"
+import cookieParser from "cookie-parser"
+
+const app = express()
+
+app.use(cors({
+    origin: process.env.CORS_ORIGIN,
+    credentials:true
+
+}))
+
+app.use(express.json({limit:"16kb"}))
+app.use(express.urlencoded({extended:true, limit:"16kb"}))
+app.use(express.static("public"))
+app.use(cookieParser())
+
+
+// routes import
+import userRouter from "./routes/user.routes.js"
+
+
+// routes declaration
+app.use("/api/v1/user",userRouter)
+
+// http://localhost:8000/api/v1/users/register
+
+export { app }
+```
+
+`user.routes.js`
+```js
+import { Router } from "express";
+import { registerUser } from "../controllers/user.controller.js";
+
+const router = Router()
+router.route("/register").post(registerUser)
+
+export default router
+
+// Single Default Export:
+//     - This code uses export default to export the router object.
+//     - The ***imported name*** (router) ***can be anything***, as the default export does not require the name to match.
+//     - A module can only have one default export.
+```
+
+`user.controller.js`
+```js
+import { asyncHandler } from "../utils/asyncHandler.js";
+
+const registerUser = asyncHandler(async (req,res)=>{
+    res.status(200).json({
+        message:"OK"
+    })
+})
+
+export {registerUser}
+```
+
+### Request and Function Call Flow
+
+1. **Request Entry (`app.js`)**
+    - The client sends a request to `http://localhost:8000/api/v1/user/register`.
+    - `app.js` routes the request to `userRouter` based on `/api/v1/user`.
+
+2. **Route Matching (`user.routes.js`)**
+    - The `userRouter` matches the `/register` route.
+    - It maps the POST request to the `registerUser` function in `user.controller.js`.
+
+3. **Controller Logic (`user.controller.js`)**
+    - `registerUser` is executed, wrapped in `asyncHandler` for error handling.
+    - The function processes the request and sends a JSON response, e.g.
+        ```json
+        { "message": "OK" }
+        ```
+
+4. **Response Sent**
+    - The response is sent back to the client, completing the flow.
+
+- **File-to-File Flow:**
+    `app.js` → `user.routes.js` → `user.controller.js` → Client Response
+
+Tested if response is returned properly in postman
+
