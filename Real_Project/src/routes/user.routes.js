@@ -17,6 +17,12 @@ router.route("/register").post(
     registerUser
 )
 
+// Middleware (upload.fields())
+//     The middleware is executed before the `registerUser` controller function.
+//     It configures multer to process files uploaded in the form fields named avatar and coverImage.
+//     It ensures only specific fields are processed as file uploads.
+//     You can enforce limits like `maxCount` to prevent abuse.
+
 export default router
 
 // Single Default Export:

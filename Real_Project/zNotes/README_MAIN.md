@@ -733,16 +733,14 @@ const uploadOnCloudinary = async (localFilePath) => {
 
     console.log(`file is uploaded to cloudinary ${response.url}`);
     return response;
-  } 
-  catch (error) {
+  } catch (error) {
     // Attempt to remove the temporary file
     try {
       fs.unlinkSync(localFilePath); // to remove the locally saved temporary file as the upload got failed
       console.log(
         `Temporary file ${localFilePath} removed after upload failure.`
       );
-    } 
-    catch (unlinkError) {
+    } catch (unlinkError) {
       console.error(
         `Failed to remove temporary file ${localFilePath}:`,
         unlinkError.message
@@ -760,48 +758,51 @@ export { uploadOnCloudinary };
 The `fs` (File System) module in `Node.js` is used to interact with the file system.
 
 It allows you to:
-  - Read, write, delete, and modify files.
-  - Work with directories.
-  - Check file/directory stats.
-  - It offers both `asynchronous` (non-blocking) and `synchronous` (blocking) methods.
 
+- Read, write, delete, and modify files.
+- Work with directories.
+- Check file/directory stats.
+- It offers both `asynchronous` (non-blocking) and `synchronous` (blocking) methods.
 
 `fs.unlinkSync` :
-  - **Purpose** : Deletes a file synchronously (blocking operation).
-  - **Syntax** : `fs.unlinkSync(path)`
-  - **path** : The path of the file to delete.
-  - **Usage** : Ensures the file is deleted before moving to the next operation.
-  - **Error Handling** : Throws an error if the file doesn't exist or permissions are insufficient
 
-  - **When to Use unlinkSync** :
-    - When you need to ensure the file is deleted before moving on to the next operation.
-    - When writing simple scripts where performance or blocking behavior isn't a concern.
-  - **When to Avoid unlinkSync** :
-    - In a server environment where non-blocking asynchronous operations are preferred for better performance and scalability.
-    - When handling large numbers of file operations to avoid freezing the application during synchronous tasks.
+- **Purpose** : Deletes a file synchronously (blocking operation).
+- **Syntax** : `fs.unlinkSync(path)`
+- **path** : The path of the file to delete.
+- **Usage** : Ensures the file is deleted before moving to the next operation.
+- **Error Handling** : Throws an error if the file doesn't exist or permissions are insufficient
+
+- **When to Use unlinkSync** :
+  - When you need to ensure the file is deleted before moving on to the next operation.
+  - When writing simple scripts where performance or blocking behavior isn't a concern.
+- **When to Avoid unlinkSync** :
+  - In a server environment where non-blocking asynchronous operations are preferred for better performance and scalability.
+  - When handling large numbers of file operations to avoid freezing the application during synchronous tasks.
 
 ## 22. Made `multer.middleware.js` in the middleware directory
+
 ```js
-import multer from "multer"
+import multer from "multer";
 
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, "./public/temp")
-    },
-    filename: function (req, file, cb) {
-      cb(null, file.originalname)
-    }
-})
+  destination: function (req, file, cb) {
+    cb(null, "./public/temp");
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
+});
 
-// `cb` stands for "callback." 
-// It is a function provided by Multer that you call to pass the result back to Multer after performing your logic. 
+// `cb` stands for "callback."
+// It is a function provided by Multer that you call to pass the result back to Multer after performing your logic.
 // It is used to define the behavior for destination and filename functions.
 // `cb` ensures that Multer waits for the callback before proceeding
 
-export const upload = multer({ 
-    storage, 
-})
+export const upload = multer({
+  storage,
+});
 ```
+
 **Most of the setup work is done with this**
 
 **Learn about status codes**
@@ -809,25 +810,27 @@ export const upload = multer({
 ## 23. Made `user.controller.js` and `user.routes.js`
 
 `user.controller.js`
+
 ```js
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-const registerUser = asyncHandler(async (req,res)=>{
-    res.status(200).json({
-        message:"OK",
-    })
-})
+const registerUser = asyncHandler(async (req, res) => {
+  res.status(200).json({
+    message: "OK",
+  });
+});
 
-export {registerUser}
+export { registerUser };
 ```
 
 `user.routes.js`
+
 ```js
 import { Router } from "express";
 
-const router = Router()
+const router = Router();
 
-export default router
+export default router;
 
 // Single Default Export:
 //     - This code uses export default to export the router object.
@@ -838,44 +841,125 @@ export default router
 ## 24. Worked on `app.js`, `user.routes.js`, `user.controller.js`
 
 `app.js`
+
 ```js
-import express from "express"
-import cors from "cors"
-import cookieParser from "cookie-parser"
+import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
 
-const app = express()
+const app = express();
 
-app.use(cors({
+app.use(
+  cors({
     origin: process.env.CORS_ORIGIN,
-    credentials:true
+    credentials: true,
+  })
+);
 
-}))
-
-app.use(express.json({limit:"16kb"}))
-app.use(express.urlencoded({extended:true, limit:"16kb"}))
-app.use(express.static("public"))
-app.use(cookieParser())
-
+app.use(express.json({ limit: "16kb" }));
+app.use(express.urlencoded({ extended: true, limit: "16kb" }));
+app.use(express.static("public"));
+app.use(cookieParser());
 
 // routes import
-import userRouter from "./routes/user.routes.js"
-
+import userRouter from "./routes/user.routes.js";
 
 // routes declaration
-app.use("/api/v1/user",userRouter)
+app.use("/api/v1/user", userRouter);
 
 // http://localhost:8000/api/v1/users/register
 
-export { app }
+export { app };
 ```
 
 `user.routes.js`
+
 ```js
 import { Router } from "express";
 import { registerUser } from "../controllers/user.controller.js";
 
+const router = Router();
+router.route("/register").post(registerUser);
+
+export default router;
+
+// Single Default Export:
+//     - This code uses export default to export the router object.
+//     - The ***imported name*** (router) ***can be anything***, as the default export does not require the name to match.
+//     - A module can only have one default export.
+```
+
+`user.controller.js`
+
+```js
+import { asyncHandler } from "../utils/asyncHandler.js";
+
+const registerUser = asyncHandler(async (req, res) => {
+  res.status(200).json({
+    message: "OK",
+  });
+});
+
+export { registerUser };
+```
+
+### Request and Function Call Flow
+
+1. **Request Entry (`app.js`)**
+
+   - The client sends a request to `http://localhost:8000/api/v1/user/register`.
+   - `app.js` routes the request to `userRouter` based on `/api/v1/user`.
+
+2. **Route Matching (`user.routes.js`)**
+
+   - The `userRouter` matches the `/register` route.
+   - It maps the POST request to the `registerUser` function in `user.controller.js`.
+
+3. **Controller Logic (`user.controller.js`)**
+
+   - `registerUser` is executed, wrapped in `asyncHandler` for error handling.
+   - The function processes the request and sends a JSON response, e.g.
+     ```json
+     { "message": "OK" }
+     ```
+
+4. **Response Sent**
+   - The response is sent back to the client, completing the flow.
+
+- **File-to-File Flow:**
+  `app.js` → `user.routes.js` → `user.controller.js` → Client Response
+
+Tested if response is getting returned properly using postman
+
+## 25. Worked on `user.routes.js` and `user.controller.js`
+
+`user.routes.js`
+
+```js
+import { Router } from "express";
+import { registerUser } from "../controllers/user.controller.js";
+import { upload } from "../middlewares/multer.middleware.js";
+
 const router = Router()
-router.route("/register").post(registerUser)
+router.route("/register").post(
+    upload.fields([
+        {
+            name:"avatar",
+            maxCount:1
+        },
+        {
+            name:"coverImage",
+            maxCount:1
+        }
+    ]),
+    registerUser
+)
+
+// Middleware (upload.fields())
+//     The middleware is executed before the `registerUser` controller function.
+//     It configures multer to process files uploaded in the form fields named avatar and coverImage.
+//     It ensures only specific fields are processed as file uploads.
+//     You can enforce limits like `maxCount` to prevent abuse.
 
 export default router
 
@@ -886,40 +970,198 @@ export default router
 ```
 
 `user.controller.js`
+
 ```js
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import { User } from "../models/user.model.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
-const registerUser = asyncHandler(async (req,res)=>{
-    res.status(200).json({
-        message:"OK"
-    })
-})
+const registerUser = asyncHandler(async (req, res) => {
+  // get user details from the frontend
+  // Validite
+  // check if user already exists
+  // check for images/avatar
+  // upload them to cloudinary
+  // create user object - create entry in db
+  // remove password and refresh token field from response
+  // chexk for user creation
+  // return res
 
-export {registerUser}
+  // console.log("Request Body : ", req.body);
+  // console.log("Request Headers : ", req.headers);
+  // console.log(`Request URL : ${req.url}, Method : ${req.method}`);
+
+  const { fullName, email, username, password } = req.body;
+  console.log(`email : ${email}`);
+
+  if (
+    [fullName, email, username, password].some((field) => field?.trim() === "")
+  ) {
+    throw new ApiError(400, "All feilds are required");
+  }
+
+  // The `.some()` method in JavaScript is an array method that tests whether at least one element in the array
+  // passes the condition defined in a provided callback function.
+  // It returns true as soon as any one element satisfies the condition.
+
+  const userExists = User.findOne({
+    $or: [{ username }, { email }],
+  });
+
+  // `$or` is used to implement the "or" operation.
+  // Here we are checking if "username" or "email" already exists. And the above is the syntax used
+
+  if (userExists) {
+    throw new ApiError(409, "user with this email or username already exists");
+  }
+
+  const avatarLocalPath = req.files?.avatar[0]?.path;
+
+  const coverImageLocalPath = req.files?.coverImage[0]?.path;
+
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar is required");
+  }
+
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+
+  if (!avatar) {
+    throw new ApiError(400, "Avatar is required");
+  }
+
+  const user = await User.create({
+    fullName,
+    username: username.toLowerCase(),
+    email,
+    avatar: avatar.url,
+    coverImage: coverImage?.url,
+  });
+
+  const userCreated = User.findById(user._id).select("-password -refreshToken");
+  // `.select()` selects everything by default so to remove password and refreshToken this can be done.
+  // `-` means to remove
+
+  if (!userCreated) {
+    throw new ApiError(500, "Something went wrong while registering the user");
+  }
+
+  return res
+    .status(201)
+    .json(new ApiResponse(200, userCreated, " user registered successfully "));
+});
+
+export { registerUser };
 ```
 
-### Request and Function Call Flow
+### **Explanation of Code**
 
-1. **Request Entry (`app.js`)**
-    - The client sends a request to `http://localhost:8000/api/v1/user/register`.
-    - `app.js` routes the request to `userRouter` based on `/api/v1/user`.
+```javascript
+const avatarLocalPath = req.files?.avatar[0]?.path;
+const coverImageLocalPath = req.files?.coverImage[0]?.path;
+```
 
-2. **Route Matching (`user.routes.js`)**
-    - The `userRouter` matches the `/register` route.
-    - It maps the POST request to the `registerUser` function in `user.controller.js`.
+---
 
-3. **Controller Logic (`user.controller.js`)**
-    - `registerUser` is executed, wrapped in `asyncHandler` for error handling.
-    - The function processes the request and sends a JSON response, e.g.
-        ```json
-        { "message": "OK" }
-        ```
+### **Purpose**
 
-4. **Response Sent**
-    - The response is sent back to the client, completing the flow.
+These lines safely retrieve the file paths of uploaded files for the `avatar` and `coverImage` fields from the `req.files` object, which is populated by the `multer` middleware during a `multipart/form-data` request.
 
-- **File-to-File Flow:**
-    `app.js` → `user.routes.js` → `user.controller.js` → Client Response
+---
 
-Tested if response is returned properly in postman
+### **How It Works**
 
+1. **`req.files`:**
+
+   - Created by `multer`, it stores uploaded files organized by field names (e.g., `avatar`, `coverImage`).
+   - When using `upload.fields()`, each field in `req.files` is an array of file objects (even if only one file is uploaded).
+
+2. **`req.files?.avatar` and `req.files?.coverImage`:**
+
+   - Optional chaining (`?.`) ensures no error is thrown if `req.files` or the specific field (`avatar` or `coverImage`) is `undefined`.
+   - If a field is absent (no file uploaded), the result is `undefined`.
+
+3. **`req.files?.avatar[0]` and `req.files?.coverImage[0]`:**
+
+   - Access the first file object in the array for `avatar` or `coverImage`.
+   - The `avatar[0]` or `coverImage[0]` is the object containing metadata about the file (e.g., `path`, `size`, `filename`, etc.).
+
+4. **`req.files?.avatar[0]?.path` and `req.files?.coverImage[0]?.path`:**
+   - Access the `path` property of the first file object.
+   - The `path` contains the server's full file path for the uploaded file (e.g., `"uploads/avatar-12345.png"`).
+
+---
+
+### **Example Scenarios**
+
+#### 1. **File Successfully Uploaded:**
+
+If a file is uploaded for `avatar`:
+
+```javascript
+req.files = {
+  avatar: [
+    {
+      path: "uploads/avatar-12345.png",
+      /* other metadata */
+    },
+  ],
+  coverImage: [
+    {
+      path: "uploads/coverImage-67890.jpg",
+      /* other metadata */
+    },
+  ],
+};
+
+const avatarLocalPath = req.files?.avatar[0]?.path; // 'uploads/avatar-12345.png'
+const coverImageLocalPath = req.files?.coverImage[0]?.path; // 'uploads/coverImage-67890.jpg'
+```
+
+#### 2. **No File Uploaded:**
+
+If no file is uploaded for `avatar` or `coverImage`:
+
+```javascript
+req.files = undefined;
+
+const avatarLocalPath = req.files?.avatar[0]?.path; // undefined
+const coverImageLocalPath = req.files?.coverImage[0]?.path; // undefined
+```
+
+---
+
+### **Why Optional Chaining (`?.`) Is Used**
+
+- Prevents runtime errors when:
+  - `req.files` is `undefined` (no files uploaded).
+  - `req.files.avatar` or `req.files.coverImage` is `undefined` (specific field missing).
+  - The array is empty (`avatar[0]` or `coverImage[0]` is `undefined`).
+
+---
+
+### **Key Notes**
+
+1. **Efficient and Safe:**
+
+   - Ensures your app won't crash if files aren't uploaded.
+   - Returns `undefined` if no file exists, making it easy to check later.
+
+2. **Use Cases:**
+   - Validating whether a file was uploaded:
+     ```javascript
+     if (!avatarLocalPath) {
+       throw new Error("Avatar file is required");
+     }
+     ```
+   - Processing file paths for saving to a database or using elsewhere in the server logic.
+
+---
+
+### **Summary**
+
+- `avatarLocalPath` and `coverImageLocalPath` retrieve the file paths of uploaded files using optional chaining and array indexing.
+- They are `undefined` if no file is uploaded or the fields are missing.
+- This approach is both **safe** and **efficient** for handling optional file uploads.
