@@ -1056,7 +1056,7 @@ const registerUser = asyncHandler(async (req, res) => {
 export { registerUser };
 ```
 
-### **Explanation of Code**
+### **Explanation this piece of Code**
 
 ```javascript
 const avatarLocalPath = req.files?.avatar[0]?.path;
@@ -1068,8 +1068,6 @@ const coverImageLocalPath = req.files?.coverImage[0]?.path;
 ### **Purpose**
 
 These lines safely retrieve the file paths of uploaded files for the `avatar` and `coverImage` fields from the `req.files` object, which is populated by the `multer` middleware during a `multipart/form-data` request.
-
----
 
 ### **How It Works**
 
@@ -1091,8 +1089,6 @@ These lines safely retrieve the file paths of uploaded files for the `avatar` an
 4. **`req.files?.avatar[0]?.path` and `req.files?.coverImage[0]?.path`:**
    - Access the `path` property of the first file object.
    - The `path` contains the server's full file path for the uploaded file (e.g., `"uploads/avatar-12345.png"`).
-
----
 
 ### **Example Scenarios**
 
@@ -1131,16 +1127,12 @@ const avatarLocalPath = req.files?.avatar[0]?.path; // undefined
 const coverImageLocalPath = req.files?.coverImage[0]?.path; // undefined
 ```
 
----
-
 ### **Why Optional Chaining (`?.`) Is Used**
 
 - Prevents runtime errors when:
   - `req.files` is `undefined` (no files uploaded).
   - `req.files.avatar` or `req.files.coverImage` is `undefined` (specific field missing).
   - The array is empty (`avatar[0]` or `coverImage[0]` is `undefined`).
-
----
 
 ### **Key Notes**
 
@@ -1157,8 +1149,6 @@ const coverImageLocalPath = req.files?.coverImage[0]?.path; // undefined
      }
      ```
    - Processing file paths for saving to a database or using elsewhere in the server logic.
-
----
 
 ### **Summary**
 
