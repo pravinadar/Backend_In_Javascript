@@ -21,19 +21,19 @@ const registerUser = asyncHandler(async (req, res) => {
     // console.log(`Request URL : ${req.url}, Method : ${req.method}`);
 
     const { fullName, email, username, password } = req.body
-    console.log(`email : ${email}`)
+    // console.log(`email : ${email}`)
 
     if (
         [fullName, email, username, password].some((field) => field?.trim() === "")
     ) {
-        throw new ApiError(400, "All feilds are required")
+        throw new ApiError(400, "All fields are required")
     }
 
     // The `.some()` method in JavaScript is an array method that tests whether at least one element in the array
     // passes the condition defined in a provided callback function. 
     // It returns true as soon as any one element satisfies the condition.
 
-    const userExists = User.findOne({
+    const userExists = await User.findOne({
         $or: [{ username }, { email }]
     })
 
@@ -45,8 +45,13 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     const avatarLocalPath = req.files?.avatar[0]?.path;
+    // const coverImageLocalPath = req.files?.coverImage[0]?.path;
 
-    const coverImageLocalPath = req.files?.coverImage[0]?.path;
+    let coverImageLocalPath;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0)
+    {
+        coverImageLocalPath = req.files.coverImage[0].path;
+    }
 
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar is required")
@@ -64,11 +69,12 @@ const registerUser = asyncHandler(async (req, res) => {
         username: username.toLowerCase(),
         email,
         avatar: avatar.url,
-        coverImage: coverImage?.url
+        coverImage: coverImage?.url || "",
+        password
 
     })
 
-    const userCreated = User.findById(user._id).select("-password -refreshToken")
+    const userCreated = await User.findById(user._id).select("-password -refreshToken")
     // `.select()` selects everything by default so to remove password and refreshToken this can be done.
     // `-` means to remove
 

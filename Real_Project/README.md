@@ -940,20 +940,20 @@ import { Router } from "express";
 import { registerUser } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
-const router = Router()
+const router = Router();
 router.route("/register").post(
-    upload.fields([
-        {
-            name:"avatar",
-            maxCount:1
-        },
-        {
-            name:"coverImage",
-            maxCount:1
-        }
-    ]),
-    registerUser
-)
+  upload.fields([
+    {
+      name: "avatar",
+      maxCount: 1,
+    },
+    {
+      name: "coverImage",
+      maxCount: 1,
+    },
+  ]),
+  registerUser
+);
 
 // Middleware (upload.fields())
 //     The middleware is executed before the `registerUser` controller function.
@@ -961,7 +961,7 @@ router.route("/register").post(
 //     It ensures only specific fields are processed as file uploads.
 //     You can enforce limits like `maxCount` to prevent abuse.
 
-export default router
+export default router;
 
 // Single Default Export:
 //     - This code uses export default to export the router object.
@@ -999,14 +999,14 @@ const registerUser = asyncHandler(async (req, res) => {
   if (
     [fullName, email, username, password].some((field) => field?.trim() === "")
   ) {
-    throw new ApiError(400, "All feilds are required");
+    throw new ApiError(400, "All fields are required");
   }
 
   // The `.some()` method in JavaScript is an array method that tests whether at least one element in the array
   // passes the condition defined in a provided callback function.
   // It returns true as soon as any one element satisfies the condition.
 
-  const userExists = User.findOne({
+  const userExists = await User.findOne({
     $or: [{ username }, { email }],
   });
 
@@ -1037,10 +1037,13 @@ const registerUser = asyncHandler(async (req, res) => {
     username: username.toLowerCase(),
     email,
     avatar: avatar.url,
-    coverImage: coverImage?.url,
+    coverImage: coverImage?.url || "",
+    password,
   });
 
-  const userCreated = User.findById(user._id).select("-password -refreshToken");
+  const userCreated = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
   // `.select()` selects everything by default so to remove password and refreshToken this can be done.
   // `-` means to remove
 
