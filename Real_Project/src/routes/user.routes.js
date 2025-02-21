@@ -1,7 +1,8 @@
 import { Router } from "express";
-import { registerUser } from "../controllers/user.controller.js";
+import { loginUser, registerUser } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
-
+import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { logoutUser } from "../controllers/user.controller.js";
 const router = Router()
 router.route("/register").post(
     upload.fields([
@@ -22,6 +23,12 @@ router.route("/register").post(
 //     It configures multer to process files uploaded in the form fields named avatar and coverImage.
 //     It ensures only specific fields are processed as file uploads.
 //     You can enforce limits like `maxCount` to prevent abuse.
+
+// secured route
+
+router.route("/login").post(loginUser)
+
+router.route("/logout").post(verifyJWT, logoutUser)
 
 export default router
 

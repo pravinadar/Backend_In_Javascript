@@ -91,6 +91,12 @@ userSchema.methods.generateAccessToken = function () {
     );
 };
 
+// jwt.sign() creates a signed JWT (JSON Web Token).
+
+// Payload: Contains user details (_id, email, etc.).
+// `expiresIn` sets token expiration.
+
+
 // Generate a refresh token
 userSchema.methods.generateRefreshToken = function () {
     return jwt.sign(
