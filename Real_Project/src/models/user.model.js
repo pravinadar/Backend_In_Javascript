@@ -96,7 +96,6 @@ userSchema.methods.generateAccessToken = function () {
 // Payload: Contains user details (_id, email, etc.).
 // `expiresIn` sets token expiration.
 
-
 // Generate a refresh token
 userSchema.methods.generateRefreshToken = function () {
     return jwt.sign(

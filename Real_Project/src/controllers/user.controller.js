@@ -8,7 +8,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 const generateAccessAndRefreshToken = async (userId) => {
 
     try {
-        const user = User.findById(userId)
+        const user = await User.findById(userId)
         const accessToken = user.generateAccessToken()
         const refreshToken = user.generateRefreshToken()
 
@@ -119,15 +119,21 @@ const loginUser = asyncHandler(async (req, res) => {
     // access and refresh token
     // send cookies
 
+    // console.log(req.body)
+
     const { email, username, password } = req.body
+    // console.log(email)
+    // console.log(username)
 
     if (!(username || email)) {
         throw new ApiError(400, "username or email is required")
     }
 
-    const user = User.findOne({
-        $or: [{ username }, { password }]
+    const user = await User.findOne({
+        $or: [{ username },{email}]
     })
+
+    // console.log(user)
 
     if (!user) {
         throw new ApiError(404, "user does not exist")
