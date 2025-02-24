@@ -67,6 +67,7 @@ The folders are `controllers` , `db` , `middlewares` , `models` , `routes` , `ut
 ## 10. Installed `mongoose` , `express` and `dotenv` packages
 
 ### Important Note
+
 #### Using `try-catch` or `promises` for establishing a database connection is professional because it ensures robust error handling during critical operations.
 
 #### For database interactions, `async-await` is preferred as it makes asynchronous code more readable, maintainable, and avoids callback hell.
@@ -1164,98 +1165,99 @@ const coverImageLocalPath = req.files?.coverImage[0]?.path; // undefined
 ## 26. Worked on `isPasswordCorrect`,`generateAccessToken`,`loginUser`,`generateRefreshToken`,`logout` and `generateAccessAndRefreshToken` in `user.model.js` and `user.controller.js` file. And made `auth.middleware.js` . Worked in `user.route.js`
 
 ### Updated user.model.js
+
 ```js
 import mongoose, { Schema } from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
 const userSchema = new Schema(
-    {
-        username: {
-            type: String,
-            required: true,
-            unique: true,
-            lowercase: true,
-            trim: true,
-            index: true, // Optimizes query performance for username
-        },
-        email: {
-            type: String,
-            required: true,
-            unique: true,
-            lowercase: true,
-            trim: true,
-            index: true, // Useful for frequent email lookups
-        },
-        fullName: {
-            type: String,
-            required: true,
-            trim: true,
-            index: true, // Optimizes search by full name
-        },
-        avatar: {
-            type: String, // Cloudinary URL
-            required: true,
-        },
-        coverImage: {
-            type: String, // Cloudinary URL
-            default: null, // Optional field with default
-        },
-        watchHistory: [
-            {
-                type: Schema.Types.ObjectId,
-                ref: "Video",
-            },
-        ],
-        password: {
-            type: String,
-            required: [true, "Password is required"],
-        },
-        refreshToken: {
-            type: String,
-            default: null, // Optional field with default
-        },
+  {
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true, // Optimizes query performance for username
     },
-    {
-        timestamps: true, // Automatically adds createdAt and updatedAt
-    }
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true, // Useful for frequent email lookups
+    },
+    fullName: {
+      type: String,
+      required: true,
+      trim: true,
+      index: true, // Optimizes search by full name
+    },
+    avatar: {
+      type: String, // Cloudinary URL
+      required: true,
+    },
+    coverImage: {
+      type: String, // Cloudinary URL
+      default: null, // Optional field with default
+    },
+    watchHistory: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Video",
+      },
+    ],
+    password: {
+      type: String,
+      required: [true, "Password is required"],
+    },
+    refreshToken: {
+      type: String,
+      default: null, // Optional field with default
+    },
+  },
+  {
+    timestamps: true, // Automatically adds createdAt and updatedAt
+  }
 );
 
 // Hash password before saving
 userSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next();
+  if (!this.isModified("password")) return next();
 
-    try {
-        this.password = await bcrypt.hash(this.password, 10);
-        next();
-    } catch (err) {
-        next(err); // Pass error to middleware
-    }
+  try {
+    this.password = await bcrypt.hash(this.password, 10);
+    next();
+  } catch (err) {
+    next(err); // Pass error to middleware
+  }
 });
 
 // Compare plain-text password with hashed password
 userSchema.methods.isPasswordCorrect = async function (password) {
-    try {
-        return await bcrypt.compare(password, this.password);
-    } catch (err) {
-        throw new Error("Password comparison failed.");
-    }
+  try {
+    return await bcrypt.compare(password, this.password);
+  } catch (err) {
+    throw new Error("Password comparison failed.");
+  }
 };
 
 // Generate an access token
 userSchema.methods.generateAccessToken = function () {
-    return jwt.sign(
-        {
-            _id: this._id,
-            email: this.email,
-            username: this.username,
-            fullName: this.fullName,
-        },
-        process.env.ACCESS_TOKEN_SECRET,
-        {
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
-        }
-    );
+  return jwt.sign(
+    {
+      _id: this._id,
+      email: this.email,
+      username: this.username,
+      fullName: this.fullName,
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+    }
+  );
 };
 
 // jwt.sign() creates a signed JWT (JSON Web Token).
@@ -1263,21 +1265,20 @@ userSchema.methods.generateAccessToken = function () {
 // Payload: Contains user details (_id, email, etc.).
 // `expiresIn` sets token expiration.
 
-
 // Generate a refresh token
 userSchema.methods.generateRefreshToken = function () {
-    return jwt.sign(
-        {
-            _id: this._id,
-        },
-        process.env.REFRESH_TOKEN_SECRET,
-        {
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
-        }
-    );
+  return jwt.sign(
+    {
+      _id: this._id,
+    },
+    process.env.REFRESH_TOKEN_SECRET,
+    {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+    }
+  );
 };
-// A refresh token is a long-lived credential used in conjunction with an access token to maintain user 
-// authentication without requiring them to log in again. 
+// A refresh token is a long-lived credential used in conjunction with an access token to maintain user
+// authentication without requiring them to log in again.
 
 // It is part of the token-based authentication strategy to improve security and enhance the user experience.
 
@@ -1285,216 +1286,220 @@ export const User = mongoose.model("User", userSchema);
 ```
 
 ### Updated user.controller.js
+
 ```js
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import { User } from "../models/user.model.js"
+import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
-
 const generateAccessAndRefreshToken = async (userId) => {
+  try {
+    const user = User.findById(userId);
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
 
-    try {
-        const user = User.findById(userId)
-        const accessToken = user.generateAccessToken()
-        const refreshToken = user.generateRefreshToken()
+    user.refreshToken = refreshToken;
 
-        user.refreshToken = refreshToken
+    user.save({ validateBeforeSave: false });
 
-        user.save({ validateBeforeSave: false })
+    // validateBeforeSave: false disables Mongoose validation before saving the document.
+    // The only update is setting user.refreshToken, so full validation is unnecessary.
 
-        // validateBeforeSave: false disables Mongoose validation before saving the document.
-        // The only update is setting user.refreshToken, so full validation is unnecessary.
-
-        return { accessToken, refreshToken }
-    } catch (error) {
-
-        throw new ApiError(500, "something went wrong while generating refresh and access token")
-    }
-}
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new ApiError(
+      500,
+      "something went wrong while generating refresh and access token"
+    );
+  }
+};
 
 const registerUser = asyncHandler(async (req, res) => {
+  // get user details from the frontend
+  // Validite
+  // check if user already exists
+  // check for images/avatar
+  // upload them to cloudinary
+  // create user object - create entry in db
+  // remove password and refresh token field from response
+  // chexk for user creation
+  // return res
 
-    // get user details from the frontend
-    // Validite
-    // check if user already exists
-    // check for images/avatar
-    // upload them to cloudinary
-    // create user object - create entry in db 
-    // remove password and refresh token field from response
-    // chexk for user creation
-    // return res 
+  // console.log("Request Body : ", req.body);
+  // console.log("Request Headers : ", req.headers);
+  // console.log(`Request URL : ${req.url}, Method : ${req.method}`);
 
-    // console.log("Request Body : ", req.body);
-    // console.log("Request Headers : ", req.headers);
-    // console.log(`Request URL : ${req.url}, Method : ${req.method}`);
+  const { fullName, email, username, password } = req.body;
+  // console.log(`email : ${email}`)
 
-    const { fullName, email, username, password } = req.body
-    // console.log(`email : ${email}`)
+  if (
+    [fullName, email, username, password].some((field) => field?.trim() === "")
+  ) {
+    throw new ApiError(400, "All fields are required");
+  }
 
-    if (
-        [fullName, email, username, password].some((field) => field?.trim() === "")
-    ) {
-        throw new ApiError(400, "All fields are required")
-    }
+  // The `.some()` method in JavaScript is an array method that tests whether at least one element in the array
+  // passes the condition defined in a provided callback function.
+  // It returns true as soon as any one element satisfies the condition.
 
-    // The `.some()` method in JavaScript is an array method that tests whether at least one element in the array
-    // passes the condition defined in a provided callback function. 
-    // It returns true as soon as any one element satisfies the condition.
+  const userExists = await User.findOne({
+    $or: [{ username }, { email }],
+  });
 
-    const userExists = await User.findOne({
-        $or: [{ username }, { email }]
-    })
+  // `$or` is used to implement the "or" operation.
+  // Here we are checking if "username" or "email" already exists. And the above is the syntax used
 
-    // `$or` is used to implement the "or" operation. 
-    // Here we are checking if "username" or "email" already exists. And the above is the syntax used
+  if (userExists) {
+    throw new ApiError(409, "user with this email or username already exists");
+  }
 
-    if (userExists) {
-        throw new ApiError(409, "user with this email or username already exists");
-    }
+  const avatarLocalPath = req.files?.avatar[0]?.path;
+  // const coverImageLocalPath = req.files?.coverImage[0]?.path;
 
-    const avatarLocalPath = req.files?.avatar[0]?.path;
-    // const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  let coverImageLocalPath;
+  if (
+    req.files &&
+    Array.isArray(req.files.coverImage) &&
+    req.files.coverImage.length > 0
+  ) {
+    coverImageLocalPath = req.files.coverImage[0].path;
+  }
 
-    let coverImageLocalPath;
-    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
-        coverImageLocalPath = req.files.coverImage[0].path;
-    }
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar is required");
+  }
 
-    if (!avatarLocalPath) {
-        throw new ApiError(400, "Avatar is required")
-    }
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
-    const avatar = await uploadOnCloudinary(avatarLocalPath)
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+  if (!avatar) {
+    throw new ApiError(400, "Avatar is required");
+  }
 
-    if (!avatar) {
-        throw new ApiError(400, "Avatar is required")
-    }
+  const user = await User.create({
+    fullName,
+    username: username.toLowerCase(),
+    email,
+    avatar: avatar.url,
+    coverImage: coverImage?.url || "",
+    password,
+  });
 
-    const user = await User.create({
-        fullName,
-        username: username.toLowerCase(),
-        email,
-        avatar: avatar.url,
-        coverImage: coverImage?.url || "",
-        password
+  const userCreated = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+  // `.select()` selects everything by default so to remove password and refreshToken this can be done.
+  // `-` means to remove
 
-    })
+  if (!userCreated) {
+    throw new ApiError(500, "Something went wrong while registering the user");
+  }
 
-    const userCreated = await User.findById(user._id).select("-password -refreshToken")
-    // `.select()` selects everything by default so to remove password and refreshToken this can be done.
-    // `-` means to remove
-
-    if (!userCreated) {
-        throw new ApiError(500, "Something went wrong while registering the user")
-    }
-
-    return res.status(201).json(
-        new ApiResponse(200, userCreated, " user registered successfully ")
-    )
-
-})
-
+  return res
+    .status(201)
+    .json(new ApiResponse(200, userCreated, " user registered successfully "));
+});
 
 const loginUser = asyncHandler(async (req, res) => {
+  // req.body --> data
+  // username or email
+  // find the user
+  // check password
+  // access and refresh token
+  // send cookies
 
-    // req.body --> data
-    // username or email
-    // find the user 
-    // check password
-    // access and refresh token
-    // send cookies
+  const { email, username, password } = req.body;
 
-    const { email, username, password } = req.body
+  if (!(username || email)) {
+    throw new ApiError(400, "username or email is required");
+  }
 
-    if (!(username || email)) {
-        throw new ApiError(400, "username or email is required")
-    }
+  const user = User.findOne({
+    $or: [{ username }, { password }],
+  });
 
-    const user = User.findOne({
-        $or: [{ username }, { password }]
-    })
+  if (!user) {
+    throw new ApiError(404, "user does not exist");
+  }
 
-    if (!user) {
-        throw new ApiError(404, "user does not exist")
-    }
+  const isPasswordValid = await user.isPasswordCorrect(password);
 
-    const isPasswordValid = await user.isPasswordCorrect(password)
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid user credentials");
+  }
 
-    if (!isPasswordValid) {
-        throw new ApiError(401, "Invalid user credentials")
-    }
+  const { accessToken, refreshToken } = generateAccessAndRefreshToken(user._id);
 
-    const { accessToken, refreshToken } = generateAccessAndRefreshToken(user._id)
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
 
-    const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
 
-    const options = {
-        httpOnly: true,
-        secure: true
-    }
-
-    return res
-        .status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options)
-        .json(
-            new ApiResponse(
-                200,
-                {
-                    user: loggedInUser, accessToken, refreshToken
-                },
-                "User logged in successfully"
-            )
-        )
-
-})
-
-const logoutUser = asyncHandler(async (req, res)=>{
-    await User.findByIdAndUpdate(
-        req.user._id,
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+        200,
         {
-            $set: {
-                refreshToken: undefined
-            }
+          user: loggedInUser,
+          accessToken,
+          refreshToken,
         },
-        {
-            new: true
-        }
-    )
-    // Setting `refreshToken: undefined` removes the refresh token from the database,
-    // ensuring full logout, preventing token reuse, and enhancing security.
-    // It ensures the user must log in again to get a new token.
+        "User logged in successfully"
+      )
+    );
+});
 
-    // The { new: true } option ensures that the method returns the 
-    // updated document instead of the old one.
-
-    // Without new: true, Mongoose would return the document before the update.
-
-    const options = {
-        httpOnly: true,
-        secure: true
+const logoutUser = asyncHandler(async (req, res) => {
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        refreshToken: undefined,
+      },
+    },
+    {
+      new: true,
     }
-    // httpOnly: true → This makes the cookie inaccessible to JavaScript on 
-    // the client side, preventing XSS (Cross-Site Scripting) attacks.
+  );
+  // Setting `refreshToken: undefined` removes the refresh token from the database,
+  // ensuring full logout, preventing token reuse, and enhancing security.
+  // It ensures the user must log in again to get a new token.
 
-    // secure: true → This ensures that the cookie is only sent over HTTPS, improving security.
+  // The { new: true } option ensures that the method returns the
+  // updated document instead of the old one.
 
-    return res
+  // Without new: true, Mongoose would return the document before the update.
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+  // httpOnly: true → This makes the cookie inaccessible to JavaScript on
+  // the client side, preventing XSS (Cross-Site Scripting) attacks.
+
+  // secure: true → This ensures that the cookie is only sent over HTTPS, improving security.
+
+  return res
     .status(200)
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
-    .json(
-        new ApiResponse(200, {}, "User logged out successfully")
-    )
-})
+    .json(new ApiResponse(200, {}, "User logged out successfully"));
+});
 
-export { registerUser, loginUser, logoutUser }
+export { registerUser, loginUser, logoutUser };
 ```
 
 ### auth.middleware.js
+
 ```js
 import { jwt } from "jsonwebtoken";
 import { ApiError } from "../utils/ApiError";
@@ -1502,42 +1507,43 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { User } from "../models/user.model";
 
 export const verifyJWT = asyncHandler(async (req, res, next) => {
-    try {
-        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "")
+  try {
+    const token =
+      req.cookies?.accessToken ||
+      req.header("Authorization")?.replace("Bearer ", "");
 
-        if (!token) {
-            throw new ApiError(401, "unauthorized request")
-        }
-
-        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
-        // jwt.verify(token, secretKey, options, callback)
-        // It takes:
-        // token → The JWT to verify.
-        // secretKey → The secret key used to sign the token. (signed in the `generateAccessToken()` and `generateRefreshToken()` function in the user.model.js file)
-        // (Optional) options → Extra settings (e.g., ignoring expiration).
-        // (Optional) callback → A function to handle the verification result asynchronously.
-
-
-        const user = await User.findById(decodedToken?._id).select("-password -refreshToken")
-
-        if (!user) {
-            throw new ApiError(401, "Invalid Access token")
-        }
-
-        req.user = user;
-        next()
-
-        //req.user = user
-        // By assigning user to req.user, we are adding a new property (user) to the request object.
-        // The next() function tells Express to move on to the next middleware or route handler in the chain.
-        // Since the same req object is used throughout, the user data attached earlier remains available.
-        // Any middleware or route handler that is executed after this middleware can access req.user and use the user information.
-
-    } catch (error) {
-        throw new ApiError(401, error?.message || "Invalid Access token")
+    if (!token) {
+      throw new ApiError(401, "unauthorized request");
     }
 
-})
+    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    // jwt.verify(token, secretKey, options, callback)
+    // It takes:
+    // token → The JWT to verify.
+    // secretKey → The secret key used to sign the token. (signed in the `generateAccessToken()` and `generateRefreshToken()` function in the user.model.js file)
+    // (Optional) options → Extra settings (e.g., ignoring expiration).
+    // (Optional) callback → A function to handle the verification result asynchronously.
+
+    const user = await User.findById(decodedToken?._id).select(
+      "-password -refreshToken"
+    );
+
+    if (!user) {
+      throw new ApiError(401, "Invalid Access token");
+    }
+
+    req.user = user;
+    next();
+
+    //req.user = user
+    // By assigning user to req.user, we are adding a new property (user) to the request object.
+    // The next() function tells Express to move on to the next middleware or route handler in the chain.
+    // Since the same req object is used throughout, the user data attached earlier remains available.
+    // Any middleware or route handler that is executed after this middleware can access req.user and use the user information.
+  } catch (error) {
+    throw new ApiError(401, error?.message || "Invalid Access token");
+  }
+});
 
 // req.cookies?.accessToken → Gets the token from cookies (used in browser authentication).
 
@@ -1547,34 +1553,35 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
 
 // If the token exists in cookies, it's used; otherwise, the header token is used. This ensures flexibility in authentication.
 
-// In an Express middleware, the typical function signature is (req, res, next). 
-// If you don't need to use the `res` (response) object in your middleware, you can replace 
-// its name with an underscore (_) to indicate it's intentionally unused. 
-// This is simply a convention to show that the parameter is there to satisfy the function signature 
+// In an Express middleware, the typical function signature is (req, res, next).
+// If you don't need to use the `res` (response) object in your middleware, you can replace
+// its name with an underscore (_) to indicate it's intentionally unused.
+// This is simply a convention to show that the parameter is there to satisfy the function signature
 // but won't be used in the function's logic.
 ```
 
 ### Updated user.route.js
+
 ```js
 import { Router } from "express";
 import { loginUser, registerUser } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { logoutUser } from "../controllers/user.controller.js";
-const router = Router()
+const router = Router();
 router.route("/register").post(
-    upload.fields([
-        {
-            name:"avatar",
-            maxCount:1
-        },
-        {
-            name:"coverImage",
-            maxCount:1
-        }
-    ]),
-    registerUser
-)
+  upload.fields([
+    {
+      name: "avatar",
+      maxCount: 1,
+    },
+    {
+      name: "coverImage",
+      maxCount: 1,
+    },
+  ]),
+  registerUser
+);
 
 // Middleware (upload.fields())
 //     The middleware is executed before the `registerUser` controller function.
@@ -1584,11 +1591,142 @@ router.route("/register").post(
 
 // secured route
 
-router.route("/login").post(loginUser)
+router.route("/login").post(loginUser);
 
-router.route("/logout").post(verifyJWT, logoutUser)
+router.route("/logout").post(verifyJWT, logoutUser);
 
-export default router
+export default router;
+
+// Single Default Export:
+//     - This code uses export default to export the router object.
+//     - The ***imported name*** (router) ***can be anything***, as the default export does not require the name to match.
+//     - A module can only have one default export.
+```
+
+## Worked on `refreshAccessToken` in the `user.controller.js` file. And updated `user.routes.js`
+
+1. **`Access Token`** (Short-Lived Credential)
+
+   Used for authentication in API requests `(Authorization: Bearer <token>)`.
+
+   Expires quickly (e.g., 15–60 minutes) for security reasons.
+
+   Typically a JWT containing user details & permissions.
+
+2. **`Refresh Token`** (Long-Lived Credential)
+
+   Used to obtain a new access token without logging in again.
+   Stored securely (e.g., HTTP-only cookies).
+   Valid for a longer period (days/weeks/months).
+
+### **How "Refresh Access Token" Works ?**
+
+1. **User logs in** → Receives an `access token` & `refresh token`.
+2. **User makes API requests** → Access token is sent in headers `(Authorization: Bearer <access_token>)`.
+3. **Access token expires** → API rejects request with `401 Unauthorized`.
+4. Client sends refresh token to the `auth` server.
+5. Auth server validates refresh token and issues a `new access token` (and sometimes a new refresh token).
+6. Client uses the new access token for subsequent API requests.
+
+**The refreshToken function which was made**
+
+```js
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incomingRefreshToken =
+    req.cookies.refreshToken || req.body.refreshToken;
+
+  if (!incomingRefreshToken) {
+    throw new ApiError(401, "unauthorised request");
+  }
+
+  try {
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    const user = await User.findById(decodedToken?._id);
+
+    if (!user) {
+      throw new ApiError(401, "invalid refresh token");
+    }
+
+    if (incomingRefreshToken !== user?.refreshToken) {
+      throw new ApiError(402, "Refresh Token is expired or used");
+    }
+
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+      user._id
+    );
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
+      .json(
+        new ApiResponse(
+          200,
+          { accessToken, refreshToken },
+          "Access Token refreshed"
+        )
+      );
+  } catch (error) {
+    throw new ApiError(401, error?.message || "invalid refresh token");
+  }
+});
+// This function refreshes the access token by verifying the incoming refresh token from cookies or the request body.
+// If the token is valid, it checks if the user exists and if the refresh token matches the one stored in the database.
+// If valid, it generates new access and refresh tokens, stores them as HTTP-only, secure cookies, and returns them in
+// the response. If any check fails, it throws an authentication error, ensuring secure and controlled token refresh handling
+```
+
+**Updated Route file**
+
+```js
+import { Router } from "express";
+import {
+  loginUser,
+  refreshAccessToken,
+  registerUser,
+} from "../controllers/user.controller.js";
+import { upload } from "../middlewares/multer.middleware.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { logoutUser } from "../controllers/user.controller.js";
+
+const router = Router();
+
+router.route("/register").post(
+  upload.fields([
+    {
+      name: "avatar",
+      maxCount: 1,
+    },
+    {
+      name: "coverImage",
+      maxCount: 1,
+    },
+  ]),
+  registerUser
+);
+
+// Middleware (upload.fields())
+//     The middleware is executed before the `registerUser` controller function.
+//     It configures multer to process files uploaded in the form fields named avatar and coverImage.
+//     It ensures only specific fields are processed as file uploads.
+//     You can enforce limits like `maxCount` to prevent abuse.
+
+router.route("/login").post(loginUser);
+
+// secured route
+router.route("/logout").post(verifyJWT, logoutUser);
+router.route("/refresh-token").post(refreshAccessToken);
+
+export default router;
 
 // Single Default Export:
 //     - This code uses export default to export the router object.

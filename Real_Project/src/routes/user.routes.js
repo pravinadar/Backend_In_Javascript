@@ -1,18 +1,20 @@
 import { Router } from "express";
-import { loginUser, registerUser } from "../controllers/user.controller.js";
+import { loginUser, refreshAccessToken, registerUser } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { logoutUser } from "../controllers/user.controller.js";
+
 const router = Router()
+
 router.route("/register").post(
     upload.fields([
         {
-            name:"avatar",
-            maxCount:1
+            name: "avatar",
+            maxCount: 1
         },
         {
-            name:"coverImage",
-            maxCount:1
+            name: "coverImage",
+            maxCount: 1
         }
     ]),
     registerUser
@@ -24,11 +26,12 @@ router.route("/register").post(
 //     It ensures only specific fields are processed as file uploads.
 //     You can enforce limits like `maxCount` to prevent abuse.
 
-// secured route
 
 router.route("/login").post(loginUser)
 
+// secured route
 router.route("/logout").post(verifyJWT, logoutUser)
+router.route("/refresh-token").post(refreshAccessToken)
 
 export default router
 
