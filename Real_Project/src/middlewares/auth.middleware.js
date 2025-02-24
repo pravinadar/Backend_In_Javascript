@@ -3,12 +3,14 @@ import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
 
-export const verifyJWT = asyncHandler(async (req, res, next) => {
+export const verifyJWT = asyncHandler(async (req, _, next) => {
     try {
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "")
 
+        console.log(token)
+
         if (!token) {
-            throw new ApiError(401, "unauthorized request")
+            throw new ApiError(401, "token not found || unauthorized request")
         }
 
         const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
@@ -47,7 +49,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
 // Authorization headers use "Bearer <token>" format.
 // .replace("Bearer ", "") extracts only the raw token for verification.
 
-// If the token exists in cookies, it's used; otherwise, the header token is used. This ensures flexibility in authentication.
+// If the token exists in cookies, it's used; otherwise, the header token is used, it should be a mutual understanding between the frontend and beckend engineers. This ensures flexibility in authentication.
 
 // In an Express middleware, the typical function signature is (req, res, next). 
 // If you don't need to use the `res` (response) object in your middleware, you can replace 

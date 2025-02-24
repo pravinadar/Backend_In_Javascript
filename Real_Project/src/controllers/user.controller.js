@@ -9,12 +9,12 @@ const generateAccessAndRefreshToken = async (userId) => {
 
     try {
         const user = await User.findById(userId)
-        const accessToken = user.generateAccessToken()
-        const refreshToken = user.generateRefreshToken()
+        const accessToken = await user.generateAccessToken()
+        const refreshToken = await user.generateRefreshToken()
 
         user.refreshToken = refreshToken
 
-        user.save({ validateBeforeSave: false })
+        await user.save({ validateBeforeSave: false })
 
         // validateBeforeSave: false disables Mongoose validation before saving the document.
         // The only update is setting user.refreshToken, so full validation is unnecessary.
@@ -145,7 +145,7 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Invalid user credentials")
     }
 
-    const { accessToken, refreshToken } = generateAccessAndRefreshToken(user._id)
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id)
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
