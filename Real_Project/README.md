@@ -1603,7 +1603,7 @@ export default router;
 //     - A module can only have one default export.
 ```
 
-## Worked on `refreshAccessToken` in the `user.controller.js` file. And updated `user.routes.js`
+## 27. Worked on `refreshAccessToken` in the `user.controller.js` file. And updated `user.routes.js`
 
 1. **`Access Token`** (Short-Lived Credential)
 
@@ -1732,4 +1732,138 @@ export default router;
 //     - This code uses export default to export the router object.
 //     - The ***imported name*** (router) ***can be anything***, as the default export does not require the name to match.
 //     - A module can only have one default export.
+```
+
+## 28. Worked on `subscription model` in `subscription.model.js` and `changeCurrentPassword()`,`getCurrentUser()`,`updateAccountDetails()`,`updateUserAvatar()`,`updateUserCoverImage()` in user.controller.js
+
+### New functions in user.controller.js
+
+```js
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+
+  const user = await User.findById(req.user?._id);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+
+  if (!isPasswordCorrect) {
+    throw new ApiError(400, "invalid old password");
+  }
+
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: false });
+  // When user.save() executes, it triggers the user.pre("save") middleware
+  // So, user.save() first runs the pre("save") hook, hashes the password (if modified),
+  // and then stores the updated user document in MongoDB.
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "password changed successfully"));
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  // assuming the user is logged in
+  return res.status(200).json(200, req.user, "user fetched successfully");
+});
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+  const { fullName, email } = req.body;
+
+  if (!fullName || !email) {
+    throw new ApiError(400, "All fields are required");
+  }
+
+  const user = User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        fullName, // syntax 1
+        email: email, // syntax 2
+      },
+    },
+    { new: true }
+  ).select("-password");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Account details updated successfully"));
+});
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  const avatarLocalPath = req.file?.path;
+
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar file is missing");
+  }
+
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+  if (!avatar.url) {
+    throw new ApiError(400, "Error while uploading avatar");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        avatar: avatar.url,
+      },
+    },
+    { new: true }
+  ).select("-password");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Avatar updated successfully"));
+});
+
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+  const coverImageLocalPath = req.file?.path;
+
+  if (!coverImageLocalPath) {
+    throw new ApiError(400, "Avatar file is missing");
+  }
+
+  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+
+  if (!coverImage.url) {
+    throw new ApiError(400, "Error while uploading avatar");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        avatar: coverImage.url,
+      },
+    },
+    { new: true }
+  ).select("-password");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "coverImage updated successfully"));
+});
+```
+### subscription.model.js
+more work to be done
+```js
+import mongoose, { Schema } from "mongoose";
+
+const subscriptionSchema = new Schema({
+    subscriber: {
+        type: Schema.Types.ObjectId,
+        ref: "User"
+    },
+    channel: {
+        type: Schema.Types.ObjectId,
+        ref: "User"
+    }
+}, { timestamps: true })
+
+export const Subscription = mongoose.model("Subscription", subscriptionSchema)
 ```
