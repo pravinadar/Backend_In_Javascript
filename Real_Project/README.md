@@ -1802,6 +1802,8 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
   const avatar = await uploadOnCloudinary(avatarLocalPath);
 
+  // Todo : delete the previous image from cloudinary.
+
   if (!avatar.url) {
     throw new ApiError(400, "Error while uploading avatar");
   }
